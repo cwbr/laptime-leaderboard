@@ -1,0 +1,45 @@
+{{define "leaderboard_partial.html"}}
+{{template "leaderboard_table" .}}
+{{end}}
+
+{{define "leaderboard_table"}}
+{{if .Entries}}
+<table>
+    <thead>
+        <tr>
+            <th class="rank">#</th>
+            <th>Driver</th>
+            <th>Car</th>
+            <th>Lap Time</th>
+            <th>Sectors</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Entries}}
+        <tr>
+            <td class="rank rank-{{.Rank}}">{{.Rank}}</td>
+            <td>
+                {{.PlayerName}}
+                {{if .Country}}<span class="country">({{.Country}})</span>{{end}}
+            </td>
+            <td>{{.CarName}}</td>
+            <td class="lap-time">{{lapTime .LapTimeMs}}</td>
+            <td class="sectors">
+                {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
+            </td>
+            <td class="country">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{else if $.SelectedTrack}}
+<div class="empty-state">
+    <p>No lap times recorded for this combination yet.</p>
+</div>
+{{else}}
+<div class="empty-state">
+    <p>Select a game and track to view the leaderboard.</p>
+</div>
+{{end}}
+{{end}}

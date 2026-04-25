@@ -78,12 +78,16 @@ func (h *Handler) handleLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	var entries []domain.LeaderboardEntry
 	if trackID > 0 {
-		entries, _ = h.service.GetLeaderboard(r.Context(), domain.LeaderboardQuery{
+		var err error
+		entries, err = h.service.GetLeaderboard(r.Context(), domain.LeaderboardQuery{
 			GameID:  gameID,
 			TrackID: trackID,
 			CarID:   carID,
 			Limit:   100,
 		})
+		if err != nil {
+			h.logger.Error("leaderboard query failed", "error", err)
+		}
 	}
 
 	games, _ := h.service.GetGames(r.Context())

@@ -38,51 +38,54 @@ func (r *LapRepo) StoreLap(ctx context.Context, lap *domain.Lap) (int64, error) 
 }
 
 func (r *LapRepo) GetLeaderboard(ctx context.Context, query domain.LeaderboardQuery) ([]domain.LeaderboardEntry, error) {
-	q := `
-		SELECT
-			p.name,
-			p.country,
-			c.name,
-			c.internal_id,
-			l.lap_time_ms,
-			l.sectors_json,
-			l.grip,
-			l.created_at
-		FROM laps l
-		JOIN players p ON p.id = l.player_id
-		JOIN cars c ON c.id = l.car_id
-		JOIN tracks t ON t.id = l.track_id
-		WHERE l.valid = 1
-		  AND t.id = ?
-	`
+	// Find the best (minimum) valid lap per player, then join back to get the full row.
+	outerWhere := "l.valid = 1 AND l.track_id = ?"
+	innerWhere := "l2.valid = 1 AND l2.track_id = ?"
 	args := []any{query.TrackID}
 
 	if query.CarID > 0 {
-		q += " AND l.car_id = ?"
+		outerWhere += " AND l.car_id = ?"
+		innerWhere += " AND l2.car_id = ?"
 		args = append(args, query.CarID)
 	}
 
 	if query.GameID > 0 {
-		q += " AND t.game_id = ?"
+		outerWhere += " AND t.game_id = ?"
+		innerWhere += " AND t2.game_id = ?"
 		args = append(args, query.GameID)
 	}
-
-	// Best lap per player: use a subquery to pick the fastest valid lap per player
-	q = `
-		SELECT sub.name, sub.country, sub.car_name, sub.car_internal, sub.lap_time_ms, sub.sectors_json, sub.grip, sub.created_at
-		FROM (` + q + ` ORDER BY l.lap_time_ms ASC) sub
-		GROUP BY sub.name
-		ORDER BY sub.lap_time_ms ASC
-	`
 
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 100
 	}
-	q += " LIMIT ?"
-	args = append(args, limit)
 
-	rows, err := r.db.conn.QueryContext(ctx, q, args...)
+	q := `
+		SELECT p.name, p.country, c.name, c.internal_id,
+		       l.lap_time_ms, l.sectors_json, l.grip, l.created_at
+		FROM laps l
+		JOIN players p ON p.id = l.player_id
+		JOIN cars c ON c.id = l.car_id
+		JOIN tracks t ON t.id = l.track_id
+		INNER JOIN (
+			SELECT l2.player_id, MIN(l2.lap_time_ms) AS best_time
+			FROM laps l2
+			JOIN tracks t2 ON t2.id = l2.track_id
+			WHERE ` + innerWhere + `
+			GROUP BY l2.player_id
+		) best ON best.player_id = l.player_id AND best.best_time = l.lap_time_ms
+		WHERE ` + outerWhere + `
+		GROUP BY l.player_id
+		ORDER BY l.lap_time_ms ASC
+		LIMIT ?
+	`
+	// args are used twice (once in subquery, once in outer WHERE)
+	allArgs := make([]any, 0, len(args)*2+1)
+	allArgs = append(allArgs, args...) // inner WHERE
+	allArgs = append(allArgs, args...) // outer WHERE
+	allArgs = append(allArgs, limit)
+
+	rows, err := r.db.conn.QueryContext(ctx, q, allArgs...)
 	if err != nil {
 		return nil, err
 	}

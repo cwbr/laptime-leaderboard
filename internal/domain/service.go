@@ -137,6 +137,11 @@ func (s *Service) GetCars(ctx context.Context, gameID int64) ([]Car, error) {
 	return s.cars.ListByGame(ctx, gameID)
 }
 
+// GetServers returns all servers for a game.
+func (s *Service) GetServers(ctx context.Context, gameID int64) ([]Server, error) {
+	return s.servers.ListByGame(ctx, gameID)
+}
+
 // GetPlayer returns a player by ID.
 func (s *Service) GetPlayer(ctx context.Context, id int64) (*Player, error) {
 	return s.players.GetByID(ctx, id)

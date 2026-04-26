@@ -35,7 +35,7 @@
         {{end}}
         {{if .HasMore}}
         <tr class="scroll-sentinel"
-            hx-get="/leaderboard/more?game_id={{$.SelectedGame}}&track_id={{$.SelectedTrack}}&car_id={{$.SelectedCar}}&offset={{$.NextOffset}}"
+            hx-get="/leaderboard/more?game_id={{$.SelectedGame}}&track_id={{$.SelectedTrack}}&car_id={{$.SelectedCar}}&server_id={{$.SelectedServer}}&offset={{$.NextOffset}}"
             hx-trigger="revealed"
             hx-swap="outerHTML"
             hx-target="this">

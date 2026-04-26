@@ -18,11 +18,12 @@ type LapRepository interface {
 
 // LeaderboardQuery defines filters for leaderboard retrieval.
 type LeaderboardQuery struct {
-	GameID  int64
-	TrackID int64
-	CarID   int64 // 0 = all cars
-	Limit   int
-	Offset  int
+	GameID   int64
+	TrackID  int64
+	CarID    int64 // 0 = all cars
+	ServerID int64 // 0 = all servers
+	Limit    int
+	Offset   int
 }
 
 // ServerRepository manages server registrations.
@@ -30,6 +31,7 @@ type ServerRepository interface {
 	GetServerByAPIKey(ctx context.Context, apiKey string) (*Server, error)
 	CreateServer(ctx context.Context, server *Server) (int64, error)
 	ListServers(ctx context.Context) ([]Server, error)
+	ListByGame(ctx context.Context, gameID int64) ([]Server, error)
 }
 
 // GameRepository manages game definitions.

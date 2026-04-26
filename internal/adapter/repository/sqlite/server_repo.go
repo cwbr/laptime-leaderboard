@@ -68,3 +68,21 @@ func (r *ServerRepo) ListServers(ctx context.Context) ([]domain.Server, error) {
 	}
 	return servers, rows.Err()
 }
+
+func (r *ServerRepo) ListByGame(ctx context.Context, gameID int64) ([]domain.Server, error) {
+	rows, err := r.db.conn.QueryContext(ctx, "SELECT id, game_id, name FROM servers WHERE game_id = ?", gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var servers []domain.Server
+	for rows.Next() {
+		var s domain.Server
+		if err := rows.Scan(&s.ID, &s.GameID, &s.Name); err != nil {
+			return nil, err
+		}
+		servers = append(servers, s)
+	}
+	return servers, rows.Err()
+}

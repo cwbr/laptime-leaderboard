@@ -40,6 +40,19 @@
             {{end}}
         </select>
     </div>
+    <div class="filter-group">
+        <label>Server</label>
+        <select name="server_id"
+                hx-get="/leaderboard"
+                hx-target="#leaderboard-area"
+                hx-include=".filters select"
+                hx-push-url="true">
+            <option value="">All servers</option>
+            {{range .Servers}}
+            <option value="{{.ID}}" {{if eq .ID $.SelectedServer}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+        </select>
+    </div>
 </div>
 
 <div id="leaderboard-area">

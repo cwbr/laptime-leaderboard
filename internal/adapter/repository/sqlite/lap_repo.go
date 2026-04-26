@@ -56,6 +56,12 @@ func (r *LapRepo) GetLeaderboard(ctx context.Context, query domain.LeaderboardQu
 		args = append(args, query.GameID)
 	}
 
+	if query.ServerID > 0 {
+		outerWhere += " AND l.server_id = ?"
+		innerWhere += " AND l2.server_id = ?"
+		args = append(args, query.ServerID)
+	}
+
 	limit := query.Limit
 	if limit <= 0 {
 		limit = 50

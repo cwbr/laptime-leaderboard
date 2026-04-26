@@ -69,10 +69,12 @@ func (h *Handler) handleLeaderboard(w http.ResponseWriter, r *http.Request) {
 	gameIDStr := r.URL.Query().Get("game_id")
 	trackIDStr := r.URL.Query().Get("track_id")
 	carIDStr := r.URL.Query().Get("car_id")
+	serverIDStr := r.URL.Query().Get("server_id")
 
 	gameID, _ := strconv.ParseInt(gameIDStr, 10, 64)
 	trackID, _ := strconv.ParseInt(trackIDStr, 10, 64)
 	carID, _ := strconv.ParseInt(carIDStr, 10, 64)
+	serverID, _ := strconv.ParseInt(serverIDStr, 10, 64)
 
 	games, _ := h.service.GetGames(r.Context())
 
@@ -84,9 +86,11 @@ func (h *Handler) handleLeaderboard(w http.ResponseWriter, r *http.Request) {
 	// Get available tracks and cars for filtering
 	var tracks []domain.Track
 	var cars []domain.Car
+	var servers []domain.Server
 	if gameID > 0 {
 		tracks, _ = h.service.GetTracks(r.Context(), gameID)
 		cars, _ = h.service.GetCars(r.Context(), gameID)
+		servers, _ = h.service.GetServers(r.Context(), gameID)
 	}
 
 	// Auto-select first track if none specified
@@ -99,10 +103,11 @@ func (h *Handler) handleLeaderboard(w http.ResponseWriter, r *http.Request) {
 	if trackID > 0 {
 		var err error
 		entries, err = h.service.GetLeaderboard(r.Context(), domain.LeaderboardQuery{
-			GameID:  gameID,
-			TrackID: trackID,
-			CarID:   carID,
-			Limit:   pageSize + 1,
+			GameID:   gameID,
+			TrackID:  trackID,
+			CarID:    carID,
+			ServerID: serverID,
+			Limit:    pageSize + 1,
 		})
 		if err != nil {
 			h.logger.Error("leaderboard query failed", "error", err)
@@ -114,15 +119,17 @@ func (h *Handler) handleLeaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"Games":        games,
-		"Tracks":       tracks,
-		"Cars":         cars,
-		"Entries":      entries,
-		"SelectedGame":  gameID,
-		"SelectedTrack": trackID,
-		"SelectedCar":   carID,
-		"HasMore":       hasMore,
-		"NextOffset":    pageSize,
+		"Games":          games,
+		"Tracks":         tracks,
+		"Cars":           cars,
+		"Servers":        servers,
+		"Entries":        entries,
+		"SelectedGame":   gameID,
+		"SelectedTrack":  trackID,
+		"SelectedCar":    carID,
+		"SelectedServer": serverID,
+		"HasMore":        hasMore,
+		"NextOffset":     pageSize,
 	}
 
 	// If HTMX request, only render the partial
@@ -138,11 +145,13 @@ func (h *Handler) handleLeaderboardMore(w http.ResponseWriter, r *http.Request) 
 	trackIDStr := r.URL.Query().Get("track_id")
 	carIDStr := r.URL.Query().Get("car_id")
 	gameIDStr := r.URL.Query().Get("game_id")
+	serverIDStr := r.URL.Query().Get("server_id")
 	offsetStr := r.URL.Query().Get("offset")
 
 	trackID, _ := strconv.ParseInt(trackIDStr, 10, 64)
 	carID, _ := strconv.ParseInt(carIDStr, 10, 64)
 	gameID, _ := strconv.ParseInt(gameIDStr, 10, 64)
+	serverID, _ := strconv.ParseInt(serverIDStr, 10, 64)
 	offset, _ := strconv.Atoi(offsetStr)
 	loadAll := r.URL.Query().Get("all") == "1"
 
@@ -157,11 +166,12 @@ func (h *Handler) handleLeaderboardMore(w http.ResponseWriter, r *http.Request) 
 	}
 
 	entries, err := h.service.GetLeaderboard(r.Context(), domain.LeaderboardQuery{
-		GameID:  gameID,
-		TrackID: trackID,
-		CarID:   carID,
-		Limit:   limit,
-		Offset:  offset,
+		GameID:   gameID,
+		TrackID:  trackID,
+		CarID:    carID,
+		ServerID: serverID,
+		Limit:    limit,
+		Offset:   offset,
 	})
 	if err != nil {
 		h.logger.Error("leaderboard more query failed", "error", err)
@@ -176,12 +186,13 @@ func (h *Handler) handleLeaderboardMore(w http.ResponseWriter, r *http.Request) 
 	}
 
 	data := map[string]any{
-		"Entries":       entries,
-		"HasMore":       hasMore,
-		"NextOffset":    offset + pageSize,
-		"SelectedGame":  gameID,
-		"SelectedTrack": trackID,
-		"SelectedCar":   carID,
+		"Entries":        entries,
+		"HasMore":        hasMore,
+		"NextOffset":     offset + pageSize,
+		"SelectedGame":   gameID,
+		"SelectedTrack":  trackID,
+		"SelectedCar":    carID,
+		"SelectedServer": serverID,
 	}
 
 	h.render(w, "leaderboard_rows.html", data)

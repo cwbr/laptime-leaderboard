@@ -1,0 +1,84 @@
+{{define "driver.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "title"}}{{.Player.Name}} — Laptime Leaderboard{{end}}
+
+{{define "content"}}
+<div class="detail-header">
+    <h1>{{.Player.Name}} {{if .Player.Country}}<span class="country">({{.Player.Country}})</span>{{end}}</h1>
+    <p class="detail-meta">Platform: {{.Player.Platform}}</p>
+</div>
+
+{{if .Bests}}
+<h2>Personal Bests</h2>
+<table id="bests-table">
+    <thead>
+        <tr>
+            <th data-sort="text">Track</th>
+            <th data-sort="text">Car</th>
+            <th data-sort="num" data-key="laptime">Lap Time</th>
+            <th>Sectors</th>
+            <th data-sort="num" data-key="date">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Bests}}
+        <tr>
+            <td>{{.TrackName}}</td>
+            <td>{{.CarName}}</td>
+            <td class="lap-time" data-value="{{.LapTimeMs}}">{{lapTime .LapTimeMs}}</td>
+            <td class="sectors">
+                {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
+            </td>
+            <td class="date" data-value="{{.CreatedAt.Unix}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{if gt .BestsPage.TotalPages 1}}
+<nav class="pagination">
+    {{if .BestsPage.HasPrev}}<a href="?bests_page={{.BestsPage.PrevPage}}" class="page-link">← Prev</a>{{else}}<span class="page-link disabled">← Prev</span>{{end}}
+    {{range .BestsPage.Pages}}{{if eq . $.BestsPage.CurrentPage}}<span class="page-link current">{{.}}</span>{{else}}<a href="?bests_page={{.}}" class="page-link">{{.}}</a>{{end}}{{end}}
+    {{if .BestsPage.HasNext}}<a href="?bests_page={{.BestsPage.NextPage}}" class="page-link">Next →</a>{{else}}<span class="page-link disabled">Next →</span>{{end}}
+</nav>
+{{end}}
+{{end}}
+
+{{if .Recent}}
+<h2>Recent Laps</h2>
+<table id="recent-table">
+    <thead>
+        <tr>
+            <th data-sort="text">Track</th>
+            <th data-sort="text">Car</th>
+            <th data-sort="num" data-key="laptime">Lap Time</th>
+            <th>Sectors</th>
+            <th>Valid</th>
+            <th data-sort="num" data-key="date">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Recent}}
+        <tr>
+            <td>{{.TrackName}}</td>
+            <td>{{.CarName}}</td>
+            <td class="lap-time" data-value="{{.LapTimeMs}}"><a href="/lap/{{.LapID}}">{{lapTime .LapTimeMs}}</a></td>
+            <td class="sectors">
+                {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
+            </td>
+            <td>{{if .Valid}}✓{{else}}✗{{end}}</td>
+            <td class="date" data-value="{{.CreatedAt.Unix}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{if gt .RecentPage.TotalPages 1}}
+<nav class="pagination">
+    {{if .RecentPage.HasPrev}}<a href="?recent_page={{.RecentPage.PrevPage}}" class="page-link">← Prev</a>{{else}}<span class="page-link disabled">← Prev</span>{{end}}
+    {{range .RecentPage.Pages}}{{if eq . $.RecentPage.CurrentPage}}<span class="page-link current">{{.}}</span>{{else}}<a href="?recent_page={{.}}" class="page-link">{{.}}</a>{{end}}{{end}}
+    {{if .RecentPage.HasNext}}<a href="?recent_page={{.RecentPage.NextPage}}" class="page-link">Next →</a>{{else}}<span class="page-link disabled">Next →</span>{{end}}
+</nav>
+{{end}}
+{{end}}
+{{end}}

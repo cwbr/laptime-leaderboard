@@ -1,0 +1,55 @@
+{{define "lap.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "title"}}Lap Detail — Laptime Leaderboard{{end}}
+
+{{define "content"}}
+<div class="detail-header">
+    <h1>Lap Detail</h1>
+</div>
+
+<div class="lap-detail-grid">
+    <div class="card">
+        <h2>Driver</h2>
+        <p><a href="/driver/{{.Lap.PlayerID}}">{{.Lap.PlayerName}}</a> {{if .Lap.PlayerCountry}}<span class="country">({{.Lap.PlayerCountry}})</span>{{end}}</p>
+    </div>
+    <div class="card">
+        <h2>Track</h2>
+        <p>{{.Lap.TrackName}}{{if .Lap.TrackConfig}} ({{.Lap.TrackConfig}}){{end}}</p>
+    </div>
+    <div class="card">
+        <h2>Car</h2>
+        <p><a href="/car/{{.Lap.CarID}}">{{.Lap.CarName}}</a>{{if .Lap.CarClass}} — {{.Lap.CarClass}}{{end}}</p>
+    </div>
+    <div class="card">
+        <h2>Lap Time</h2>
+        <p class="lap-time" style="font-size:1.5rem">{{lapTime .Lap.LapTimeMs}}</p>
+    </div>
+    {{if .Lap.SectorsMs}}
+    <div class="card">
+        <h2>Sectors</h2>
+        <div class="sector-breakdown">
+            {{range $i, $s := .Lap.SectorsMs}}
+            <div class="sector-item">
+                <span class="sector-label">S{{$i | plus1}}</span>
+                <span class="lap-time">{{lapTime $s}}</span>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    <div class="card">
+        <h2>Details</h2>
+        <table class="info-table">
+            <tr><td>Valid</td><td>{{if .Lap.Valid}}✓ Yes{{else}}✗ No{{end}}</td></tr>
+            <tr><td>Cuts</td><td>{{.Lap.Cuts}}</td></tr>
+            {{if .Lap.Grip}}<tr><td>Grip</td><td>{{printf "%.0f" (mul .Lap.Grip 100)}}%</td></tr>{{end}}
+            {{if .Lap.SessionType}}<tr><td>Session</td><td>{{.Lap.SessionType}}</td></tr>{{end}}
+            <tr><td>Server</td><td>{{.Lap.ServerName}}</td></tr>
+            <tr><td>Game</td><td>{{.Lap.GameName}}</td></tr>
+            <tr><td>Date</td><td><time datetime="{{.Lap.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.Lap.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td></tr>
+        </table>
+    </div>
+</div>
+{{end}}

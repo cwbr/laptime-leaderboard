@@ -106,9 +106,20 @@ func (s *Service) IngestLap(ctx context.Context, req IngestLapRequest) error {
 	return nil
 }
 
-// GetLeaderboard returns the leaderboard for a given query.
+// GetLeaderboard returns the leaderboard for a given query, with delta times.
 func (s *Service) GetLeaderboard(ctx context.Context, query LeaderboardQuery) ([]LeaderboardEntry, error) {
-	return s.laps.GetLeaderboard(ctx, query)
+	entries, err := s.laps.GetLeaderboard(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	// Compute delta to leader
+	if len(entries) > 0 {
+		leaderTime := entries[0].LapTimeMs
+		for i := range entries {
+			entries[i].DeltaMs = int32(entries[i].LapTimeMs) - int32(leaderTime)
+		}
+	}
+	return entries, nil
 }
 
 // GetGames returns all registered games.
@@ -124,4 +135,34 @@ func (s *Service) GetTracks(ctx context.Context, gameID int64) ([]Track, error) 
 // GetCars returns all cars for a game.
 func (s *Service) GetCars(ctx context.Context, gameID int64) ([]Car, error) {
 	return s.cars.ListByGame(ctx, gameID)
+}
+
+// GetPlayer returns a player by ID.
+func (s *Service) GetPlayer(ctx context.Context, id int64) (*Player, error) {
+	return s.players.GetByID(ctx, id)
+}
+
+// GetCar returns a car by ID.
+func (s *Service) GetCar(ctx context.Context, id int64) (*Car, error) {
+	return s.cars.GetByID(ctx, id)
+}
+
+// GetLapDetail returns a fully resolved lap.
+func (s *Service) GetLapDetail(ctx context.Context, lapID int64) (*LapDetail, error) {
+	return s.laps.GetLapDetail(ctx, lapID)
+}
+
+// GetPlayerBestLaps returns the player's best lap per track.
+func (s *Service) GetPlayerBestLaps(ctx context.Context, playerID int64, limit, offset int) ([]PlayerBestLap, int, error) {
+	return s.laps.GetPlayerBestLaps(ctx, playerID, limit, offset)
+}
+
+// GetPlayerRecentLaps returns the player's most recent laps.
+func (s *Service) GetPlayerRecentLaps(ctx context.Context, playerID int64, limit, offset int) ([]PlayerRecentLap, int, error) {
+	return s.laps.GetPlayerRecentLaps(ctx, playerID, limit, offset)
+}
+
+// GetCarTrackBests returns the fastest lap per track for a car.
+func (s *Service) GetCarTrackBests(ctx context.Context, carID int64, limit, offset int) ([]CarTrackBest, int, error) {
+	return s.laps.GetCarTrackBests(ctx, carID, limit, offset)
 }

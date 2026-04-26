@@ -5,17 +5,11 @@
 {{define "title"}}Leaderboard — Laptime Leaderboard{{end}}
 
 {{define "content"}}
-<h1>Leaderboard</h1>
-
 <div class="filters">
     <div class="filter-group">
         <label>Game</label>
         <select name="game_id"
-                hx-get="/leaderboard"
-                hx-target="#leaderboard-content"
-                hx-include=".filters select"
-                hx-push-url="true">
-            <option value="">Select game...</option>
+                onchange="window.location='/?game_id='+this.value">
             {{range .Games}}
             <option value="{{.ID}}" {{if eq .ID $.SelectedGame}}selected{{end}}>{{.Name}}</option>
             {{end}}
@@ -25,10 +19,9 @@
         <label>Track</label>
         <select name="track_id"
                 hx-get="/leaderboard"
-                hx-target="#leaderboard-content"
+                hx-target="#leaderboard-area"
                 hx-include=".filters select"
                 hx-push-url="true">
-            <option value="">All tracks</option>
             {{range .Tracks}}
             <option value="{{.ID}}" {{if eq .ID $.SelectedTrack}}selected{{end}}>{{.Name}}</option>
             {{end}}
@@ -38,7 +31,7 @@
         <label>Car</label>
         <select name="car_id"
                 hx-get="/leaderboard"
-                hx-target="#leaderboard-content"
+                hx-target="#leaderboard-area"
                 hx-include=".filters select"
                 hx-push-url="true">
             <option value="">All cars</option>
@@ -49,7 +42,7 @@
     </div>
 </div>
 
-<div id="leaderboard-content">
+<div id="leaderboard-area">
     {{template "leaderboard_table" .}}
 </div>
 {{end}}

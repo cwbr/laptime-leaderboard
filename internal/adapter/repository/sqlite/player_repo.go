@@ -55,3 +55,24 @@ func (r *PlayerRepo) GetByID(ctx context.Context, id int64) (*domain.Player, err
 	}
 	return &p, nil
 }
+
+func (r *PlayerRepo) SearchByName(ctx context.Context, name string) ([]domain.Player, error) {
+	rows, err := r.db.conn.QueryContext(ctx,
+		"SELECT id, platform, platform_id, name, country FROM players WHERE name LIKE ? ORDER BY name LIMIT 25",
+		"%"+name+"%",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var players []domain.Player
+	for rows.Next() {
+		var p domain.Player
+		if err := rows.Scan(&p.ID, &p.Platform, &p.PlatformID, &p.Name, &p.Country); err != nil {
+			return nil, err
+		}
+		players = append(players, p)
+	}
+	return players, rows.Err()
+}

@@ -1,0 +1,23 @@
+{{define "pagination"}}
+{{if gt .TotalPages 1}}
+<nav class="pagination">
+    {{if .HasPrev}}
+    <a href="?page={{.PrevPage}}" class="page-link">← Prev</a>
+    {{else}}
+    <span class="page-link disabled">← Prev</span>
+    {{end}}
+    {{range .Pages}}
+    {{if eq . $.CurrentPage}}
+    <span class="page-link current">{{.}}</span>
+    {{else}}
+    <a href="?page={{.}}" class="page-link">{{.}}</a>
+    {{end}}
+    {{end}}
+    {{if .HasNext}}
+    <a href="?page={{.NextPage}}" class="page-link">Next →</a>
+    {{else}}
+    <span class="page-link disabled">Next →</span>
+    {{end}}
+</nav>
+{{end}}
+{{end}}

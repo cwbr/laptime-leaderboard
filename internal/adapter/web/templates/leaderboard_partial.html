@@ -4,31 +4,42 @@
 
 {{define "leaderboard_table"}}
 {{if .Entries}}
-<table>
+<table id="leaderboard-table">
     <thead>
         <tr>
-            <th class="rank">#</th>
-            <th>Driver</th>
-            <th>Car</th>
-            <th>Lap Time</th>
+            <th class="rank" data-sort="num">#</th>
+            <th data-sort="text">Driver</th>
+            <th data-sort="text">Car</th>
+            <th data-sort="num" data-key="laptime">Lap Time</th>
+            <th data-sort="num" data-key="delta">Delta</th>
             <th>Sectors</th>
-            <th>Date</th>
+            <th data-sort="num" data-key="date">Date</th>
         </tr>
     </thead>
     <tbody>
         {{range .Entries}}
-        <tr>
+        <tr class="clickable-row" data-href="/lap/{{.LapID}}">
             <td class="rank rank-{{.Rank}}">{{.Rank}}</td>
             <td>
-                {{.PlayerName}}
+                <a href="/driver/{{.PlayerID}}">{{.PlayerName}}</a>
                 {{if .Country}}<span class="country">({{.Country}})</span>{{end}}
             </td>
-            <td>{{.CarName}}</td>
-            <td class="lap-time">{{lapTime .LapTimeMs}}</td>
+            <td><a href="/car/{{.CarID}}">{{.CarName}}</a></td>
+            <td class="lap-time" data-value="{{.LapTimeMs}}">{{lapTime .LapTimeMs}}</td>
+            <td class="delta" data-value="{{.DeltaMs}}">{{deltaTime .DeltaMs}}</td>
             <td class="sectors">
                 {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
             </td>
-            <td class="country">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+            <td class="date" data-value="{{.CreatedAt.Unix}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td>
+        </tr>
+        {{end}}
+        {{if .HasMore}}
+        <tr class="scroll-sentinel"
+            hx-get="/leaderboard/more?game_id={{$.SelectedGame}}&track_id={{$.SelectedTrack}}&car_id={{$.SelectedCar}}&offset={{$.NextOffset}}"
+            hx-trigger="revealed"
+            hx-swap="outerHTML"
+            hx-target="this">
+            <td colspan="7" class="loading-cell">Loading more…</td>
         </tr>
         {{end}}
     </tbody>

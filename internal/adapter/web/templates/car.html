@@ -1,0 +1,46 @@
+{{define "car.html"}}
+{{template "base" .}}
+{{end}}
+
+{{define "title"}}{{.Car.Name}} — Laptime Leaderboard{{end}}
+
+{{define "content"}}
+<div class="detail-header">
+    <h1>{{.Car.Name}}</h1>
+    {{if .Car.Class}}<p class="detail-meta">Class: {{.Car.Class}}</p>{{end}}
+    <p class="detail-meta detail-internal">{{.Car.InternalID}}</p>
+</div>
+
+{{if .Bests}}
+<h2>Track Records</h2>
+<table id="car-bests-table">
+    <thead>
+        <tr>
+            <th data-sort="text">Track</th>
+            <th data-sort="text">Driver</th>
+            <th data-sort="num" data-key="laptime">Lap Time</th>
+            <th>Sectors</th>
+            <th data-sort="num" data-key="date">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Bests}}
+        <tr>
+            <td>{{.TrackName}}</td>
+            <td>{{.PlayerName}}</td>
+            <td class="lap-time" data-value="{{.LapTimeMs}}">{{lapTime .LapTimeMs}}</td>
+            <td class="sectors">
+                {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
+            </td>
+            <td class="date" data-value="{{.CreatedAt.Unix}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{template "pagination" .PageInfo}}
+{{else}}
+<div class="empty-state">
+    <p>No lap times recorded for this car yet.</p>
+</div>
+{{end}}
+{{end}}

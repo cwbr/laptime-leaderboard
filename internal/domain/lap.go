@@ -24,14 +24,108 @@ type Lap struct {
 // LeaderboardEntry is a projected view: best lap per player/track/car.
 type LeaderboardEntry struct {
 	Rank        int       `json:"rank"`
+	LapID       int64     `json:"lap_id"`
+	PlayerID    int64     `json:"player_id"`
 	PlayerName  string    `json:"player_name"`
 	Country     string    `json:"country"`
+	CarID       int64     `json:"car_id"`
 	CarName     string    `json:"car_name"`
 	CarInternal string    `json:"car_internal"`
+	LapTimeMs   uint32    `json:"lap_time_ms"`
+	DeltaMs     int32     `json:"delta_ms"`
+	SectorsMs   []uint32  `json:"sectors_ms,omitempty"`
+	Grip        float32   `json:"grip,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// LapDetail is a fully resolved lap with all related entity names.
+type LapDetail struct {
+	Lap
+	PlayerName  string `json:"player_name"`
+	PlayerCountry string `json:"player_country"`
+	TrackName   string `json:"track_name"`
+	TrackConfig string `json:"track_config"`
+	CarName     string `json:"car_name"`
+	CarClass    string `json:"car_class"`
+	ServerName  string `json:"server_name"`
+	GameName    string `json:"game_name"`
+}
+
+// PlayerBestLap is a player's best lap on a specific track.
+type PlayerBestLap struct {
+	TrackID     int64     `json:"track_id"`
+	TrackName   string    `json:"track_name"`
+	CarName     string    `json:"car_name"`
 	LapTimeMs   uint32    `json:"lap_time_ms"`
 	SectorsMs   []uint32  `json:"sectors_ms,omitempty"`
 	Grip        float32   `json:"grip,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+// PlayerRecentLap is a recent lap with track/car info.
+type PlayerRecentLap struct {
+	LapID       int64     `json:"lap_id"`
+	TrackName   string    `json:"track_name"`
+	CarName     string    `json:"car_name"`
+	LapTimeMs   uint32    `json:"lap_time_ms"`
+	SectorsMs   []uint32  `json:"sectors_ms,omitempty"`
+	Valid       bool      `json:"valid"`
+	Grip        float32   `json:"grip,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// CarTrackBest is the fastest lap for a car on a specific track.
+type CarTrackBest struct {
+	TrackID     int64     `json:"track_id"`
+	TrackName   string    `json:"track_name"`
+	PlayerName  string    `json:"player_name"`
+	LapTimeMs   uint32    `json:"lap_time_ms"`
+	SectorsMs   []uint32  `json:"sectors_ms,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// PageInfo carries pagination metadata for templates.
+type PageInfo struct {
+	CurrentPage int
+	TotalPages  int
+	TotalItems  int
+	PageSize    int
+}
+
+func NewPageInfo(page, pageSize, totalItems int) PageInfo {
+	totalPages := (totalItems + pageSize - 1) / pageSize
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	return PageInfo{
+		CurrentPage: page,
+		TotalPages:  totalPages,
+		TotalItems:  totalItems,
+		PageSize:    pageSize,
+	}
+}
+
+func (p PageInfo) HasPrev() bool { return p.CurrentPage > 1 }
+func (p PageInfo) HasNext() bool { return p.CurrentPage < p.TotalPages }
+func (p PageInfo) PrevPage() int { return p.CurrentPage - 1 }
+func (p PageInfo) NextPage() int { return p.CurrentPage + 1 }
+
+// Pages returns a slice of page numbers for template iteration.
+func (p PageInfo) Pages() []int {
+	pages := make([]int, p.TotalPages)
+	for i := range pages {
+		pages[i] = i + 1
+	}
+	return pages
+}
+
+// DeltaFormatted returns a delta string like "+0.432" or "" for the leader.
+func DeltaFormatted(deltaMs int32) string {
+	if deltaMs == 0 {
+		return ""
+	}
+	sec := float64(deltaMs) / 1000.0
+	return fmt.Sprintf("+%.3f", sec)
 }
 
 // LapTimeFormatted returns a human-readable lap time string like "1:38.432".

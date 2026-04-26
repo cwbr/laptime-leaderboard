@@ -57,8 +57,12 @@ func (r *TrackRepo) GetByID(ctx context.Context, id int64) (*domain.Track, error
 }
 
 func (r *TrackRepo) ListByGame(ctx context.Context, gameID int64) ([]domain.Track, error) {
-	rows, err := r.db.conn.QueryContext(ctx,
-		"SELECT id, game_id, internal_id, config, name FROM tracks WHERE game_id = ? ORDER BY name", gameID,
+	rows, err := r.db.conn.QueryContext(ctx, `
+		SELECT DISTINCT t.id, t.game_id, t.internal_id, t.config, t.name
+		FROM tracks t
+		JOIN laps l ON l.track_id = t.id AND l.valid = 1
+		WHERE t.game_id = ?
+		ORDER BY t.name`, gameID,
 	)
 	if err != nil {
 		return nil, err
@@ -74,4 +78,12 @@ func (r *TrackRepo) ListByGame(ctx context.Context, gameID int64) ([]domain.Trac
 		tracks = append(tracks, t)
 	}
 	return tracks, rows.Err()
+}
+
+func (r *TrackRepo) UpsertDisplayName(ctx context.Context, gameID int64, internalID, config, name string) error {
+	_, err := r.db.conn.ExecContext(ctx, `
+		INSERT INTO tracks (game_id, internal_id, config, name) VALUES (?, ?, ?, ?)
+		ON CONFLICT(game_id, internal_id, config) DO UPDATE SET name = excluded.name
+	`, gameID, internalID, config, name)
+	return err
 }

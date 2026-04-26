@@ -53,8 +53,12 @@ func (r *CarRepo) GetByID(ctx context.Context, id int64) (*domain.Car, error) {
 }
 
 func (r *CarRepo) ListByGame(ctx context.Context, gameID int64) ([]domain.Car, error) {
-	rows, err := r.db.conn.QueryContext(ctx,
-		"SELECT id, game_id, internal_id, name, class FROM cars WHERE game_id = ? ORDER BY name", gameID,
+	rows, err := r.db.conn.QueryContext(ctx, `
+		SELECT DISTINCT c.id, c.game_id, c.internal_id, c.name, c.class
+		FROM cars c
+		JOIN laps l ON l.car_id = c.id AND l.valid = 1
+		WHERE c.game_id = ?
+		ORDER BY c.name`, gameID,
 	)
 	if err != nil {
 		return nil, err
@@ -70,4 +74,12 @@ func (r *CarRepo) ListByGame(ctx context.Context, gameID int64) ([]domain.Car, e
 		cars = append(cars, c)
 	}
 	return cars, rows.Err()
+}
+
+func (r *CarRepo) UpsertDisplayName(ctx context.Context, gameID int64, internalID, name string) error {
+	_, err := r.db.conn.ExecContext(ctx, `
+		INSERT INTO cars (game_id, internal_id, name, class) VALUES (?, ?, ?, '')
+		ON CONFLICT(game_id, internal_id) DO UPDATE SET name = excluded.name
+	`, gameID, internalID, name)
+	return err
 }

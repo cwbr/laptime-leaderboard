@@ -60,6 +60,7 @@
         .filters {
             display: flex;
             gap: 1rem;
+            margin-top: 1.5rem;
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
             align-items: end;
@@ -82,7 +83,12 @@
             letter-spacing: 0.05em;
             color: var(--muted);
             border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
         }
+        th:hover { color: var(--text); }
+        th.sort-asc::after { content: ' ▲'; font-size: 0.65rem; }
+        th.sort-desc::after { content: ' ▼'; font-size: 0.65rem; }
         td {
             padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border);
@@ -90,15 +96,22 @@
         }
         tr:last-child td { border-bottom: none; }
         tr:hover { background: rgba(108, 99, 255, 0.05); }
+        tr.clickable-row { cursor: pointer; }
+        tr.clickable-row:hover { background: rgba(108, 99, 255, 0.1); }
 
         .rank { font-weight: 700; width: 3rem; text-align: center; }
         .rank-1 { color: var(--gold); }
         .rank-2 { color: var(--silver); }
         .rank-3 { color: var(--bronze); }
+        tr:has(.rank-1) { border-left: 3px solid var(--gold); }
+        tr:has(.rank-2) { border-left: 3px solid var(--silver); }
+        tr:has(.rank-3) { border-left: 3px solid var(--bronze); }
 
         .lap-time { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 600; font-size: 1rem; }
+        .delta { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--muted); }
         .sectors { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; color: var(--muted); }
         .country { font-size: 0.85rem; color: var(--muted); }
+        .date { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 
         .empty-state {
             text-align: center;
@@ -131,14 +144,157 @@
 
         .htmx-indicator { opacity: 0; transition: opacity 200ms; }
         .htmx-request .htmx-indicator { opacity: 1; }
+
+        h2 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+
+        .detail-header { margin-top: 1.5rem; margin-bottom: 1rem; }
+        .detail-header h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+        .detail-meta { color: var(--muted); font-size: 0.9rem; }
+        .detail-internal { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; }
+
+        .lap-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .sector-breakdown { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+        .sector-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+        .sector-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+
+        .info-table { background: transparent; }
+        .info-table td { padding: 0.35rem 0.75rem 0.35rem 0; border: none; }
+        .info-table td:first-child { color: var(--muted); font-size: 0.85rem; }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .pagination {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            padding: 0 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .page-link:hover { border-color: var(--accent); background: rgba(108, 99, 255, 0.1); text-decoration: none; }
+        .page-link.current { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+        .page-link.disabled { color: var(--muted); pointer-events: none; opacity: 0.4; }
+
+        .loading-cell {
+            text-align: center;
+            padding: 1rem;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        .scroll-sentinel td { border-bottom: none; }
     </style>
+    <script>
+    function formatDates() {
+        const fmt = new Intl.DateTimeFormat(undefined, {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+        document.querySelectorAll('time[datetime]').forEach(el => {
+            el.textContent = fmt.format(new Date(el.getAttribute('datetime')));
+        });
+    }
+    document.addEventListener('DOMContentLoaded', formatDates);
+    document.addEventListener('htmx:afterSwap', formatDates);
+
+    function initSort() {
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            if (th.dataset.bound) return;
+            th.dataset.bound = '1';
+            th.addEventListener('click', () => sortTable(th));
+        });
+    }
+    function sortTable(th) {
+        const table = th.closest('table');
+        const tbody = table.querySelector('tbody');
+        const sentinel = tbody.querySelector('.scroll-sentinel');
+
+        // If there are unloaded rows, fetch them all first
+        if (sentinel) {
+            const url = sentinel.getAttribute('hx-get');
+            if (url) {
+                sentinel.querySelector('td').textContent = 'Loading all rows…';
+                fetch(url + '&all=1').then(r => r.text()).then(html => {
+                    sentinel.remove();
+                    tbody.insertAdjacentHTML('beforeend', html);
+                    formatDates();
+                    initClickableRows();
+                    doSort(th, table, tbody);
+                });
+                return;
+            }
+        }
+        doSort(th, table, tbody);
+    }
+    function doSort(th, table, tbody) {
+        const rows = Array.from(tbody.querySelectorAll('tr:not(.scroll-sentinel)'));
+        const idx = Array.from(th.parentNode.children).indexOf(th);
+        const type = th.dataset.sort;
+        const asc = !th.classList.contains('sort-asc');
+
+        th.parentNode.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+        rows.sort((a, b) => {
+            const cellA = a.children[idx];
+            const cellB = b.children[idx];
+            let va, vb;
+            if (cellA.dataset.value !== undefined && cellA.dataset.value !== '') {
+                va = parseFloat(cellA.dataset.value);
+                vb = parseFloat(cellB.dataset.value);
+            } else if (type === 'num') {
+                va = parseFloat(cellA.textContent) || 0;
+                vb = parseFloat(cellB.textContent) || 0;
+            } else {
+                va = cellA.textContent.trim().toLowerCase();
+                vb = cellB.textContent.trim().toLowerCase();
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+            return asc ? va - vb : vb - va;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+    }
+    document.addEventListener('DOMContentLoaded', initSort);
+    document.addEventListener('htmx:afterSwap', initSort);
+
+    function initClickableRows() {
+        document.querySelectorAll('tr.clickable-row').forEach(row => {
+            if (row.dataset.bound) return;
+            row.dataset.bound = '1';
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('a')) return;
+                window.location = row.dataset.href;
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initClickableRows);
+    document.addEventListener('htmx:afterSwap', initClickableRows);
+    </script>
 </head>
 <body>
     <nav>
         <div class="container">
             <a href="/" class="logo">Laptime Leaderboard</a>
-            <a href="/">Home</a>
-            <a href="/leaderboard">Leaderboard</a>
         </div>
     </nav>
     <main class="container">

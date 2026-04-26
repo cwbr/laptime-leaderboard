@@ -1,0 +1,27 @@
+{{define "leaderboard_rows.html"}}
+{{range .Entries}}
+<tr class="clickable-row" data-href="/lap/{{.LapID}}">
+    <td class="rank rank-{{.Rank}}">{{.Rank}}</td>
+    <td>
+        <a href="/driver/{{.PlayerID}}">{{.PlayerName}}</a>
+        {{if .Country}}<span class="country">({{.Country}})</span>{{end}}
+    </td>
+    <td><a href="/car/{{.CarID}}">{{.CarName}}</a></td>
+    <td class="lap-time" data-value="{{.LapTimeMs}}">{{lapTime .LapTimeMs}}</td>
+    <td class="delta" data-value="{{.DeltaMs}}">{{deltaTime .DeltaMs}}</td>
+    <td class="sectors">
+        {{range $i, $s := .SectorsMs}}{{if $i}} / {{end}}{{lapTime $s}}{{end}}
+    </td>
+    <td class="date" data-value="{{.CreatedAt.Unix}}"><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td>
+</tr>
+{{end}}
+{{if .HasMore}}
+<tr class="scroll-sentinel"
+    hx-get="/leaderboard/more?game_id={{.SelectedGame}}&track_id={{.SelectedTrack}}&car_id={{.SelectedCar}}&offset={{.NextOffset}}"
+    hx-trigger="revealed"
+    hx-swap="outerHTML"
+    hx-target="this">
+    <td colspan="7" class="loading-cell">Loading more…</td>
+</tr>
+{{end}}
+{{end}}

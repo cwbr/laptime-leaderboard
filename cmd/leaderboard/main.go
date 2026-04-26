@@ -38,6 +38,10 @@ func main() {
 	// Repositories
 	serverRepo := sqlite.NewServerRepo(db)
 	gameRepo := sqlite.NewGameRepo(db)
+	trackRepo := sqlite.NewTrackRepo(db)
+	carRepo := sqlite.NewCarRepo(db)
+	lapRepo := sqlite.NewLapRepo(db)
+	playerRepo := sqlite.NewPlayerRepo(db)
 
 	// Route subcommand
 	cmd := "serve"
@@ -47,19 +51,17 @@ func main() {
 
 	switch cmd {
 	case "serve":
-		runServe(cfg, db, gameRepo, serverRepo, logger)
+		runServe(cfg, db, gameRepo, serverRepo, trackRepo, carRepo, logger)
 	case "admin":
-		admin.Run(os.Args[2:], serverRepo, gameRepo)
+		admin.Run(os.Args[2:], serverRepo, gameRepo, trackRepo, carRepo, lapRepo, playerRepo)
 	default:
 		fmt.Fprintf(os.Stderr, "Usage: leaderboard <serve|admin> [args]\n")
 		os.Exit(1)
 	}
 }
 
-func runServe(cfg config.Config, db *sqlite.DB, gameRepo *sqlite.GameRepo, serverRepo *sqlite.ServerRepo, logger *slog.Logger) {
+func runServe(cfg config.Config, db *sqlite.DB, gameRepo *sqlite.GameRepo, serverRepo *sqlite.ServerRepo, trackRepo *sqlite.TrackRepo, carRepo *sqlite.CarRepo, logger *slog.Logger) {
 	lapRepo := sqlite.NewLapRepo(db)
-	trackRepo := sqlite.NewTrackRepo(db)
-	carRepo := sqlite.NewCarRepo(db)
 	playerRepo := sqlite.NewPlayerRepo(db)
 
 	svc := domain.NewService(lapRepo, serverRepo, gameRepo, trackRepo, carRepo, playerRepo, logger)

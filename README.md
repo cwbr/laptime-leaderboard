@@ -1,6 +1,6 @@
 # Laptime Leaderboard
 
-A self-hosted lap time leaderboard for sim racing servers. Supports multiple games, servers, tracks, and cars. Built to work with Assetto Corsa via the [LeaderboardPlugin](https://github.com/chris/AssettoServer) for AssettoServer, but the REST API is game-agnostic.
+A self-hosted lap time leaderboard for sim racing servers. Supports multiple games, servers, tracks, and cars. Built to work with Assetto Corsa via the [LeaderboardPlugin](https://github.com/cwbr/AssettoServer/tree/feature/leaderboard-plugin) for AssettoServer, but the REST API is game-agnostic.
 
 ## Features
 

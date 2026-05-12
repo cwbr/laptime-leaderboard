@@ -51,5 +51,18 @@
             <tr><td>Date</td><td><time datetime="{{.Lap.CreatedAt.Format "2006-01-02T15:04:05Z"}}">{{.Lap.CreatedAt.Format "02 Jan 2006 15:04"}}</time></td></tr>
         </table>
     </div>
+    {{if .HasCSPData}}
+    <div class="card">
+        <h2>Assists &amp; Input</h2>
+        <table class="info-table">
+            {{if not (isNil .Lap.ABSLevel)}}<tr><td>ABS</td><td>{{if eq (deref .Lap.ABSLevel) 0}}Off{{else}}Level {{deref .Lap.ABSLevel}}{{end}}</td></tr>{{end}}
+            {{if not (isNil .Lap.TCLevel)}}<tr><td>TC</td><td>{{if eq (deref .Lap.TCLevel) 0}}Off{{else}}Level {{deref .Lap.TCLevel}}{{end}}</td></tr>{{end}}
+            {{if not (isNil .Lap.StabilityControl)}}<tr><td>Stability</td><td>{{printf "%.0f" (mul64 (deref .Lap.StabilityControl) 100)}}%</td></tr>{{end}}
+            {{if not (isNil .Lap.AutoShifting)}}<tr><td>Auto Shifting</td><td>{{if deref .Lap.AutoShifting}}Yes{{else}}No{{end}}</td></tr>{{end}}
+            {{if not (isNil .Lap.InputMethod)}}<tr><td>Input</td><td>{{inputMethod (deref .Lap.InputMethod)}}</td></tr>{{end}}
+            {{if not (isNil .Lap.TyreCompound)}}<tr><td>Tyre Compound</td><td>{{deref .Lap.TyreCompound}}</td></tr>{{end}}
+        </table>
+    </div>
+    {{end}}
 </div>
 {{end}}

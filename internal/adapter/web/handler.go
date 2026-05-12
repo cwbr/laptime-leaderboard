@@ -2,9 +2,11 @@ package web
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/chris/laptime-leaderboard/internal/domain"
@@ -31,6 +33,36 @@ func NewHandler(service *domain.Service, logger *slog.Logger) *Handler {
 		"deltaTime": domain.DeltaFormatted,
 		"plus1":     func(i int) int { return i + 1 },
 		"mul":       func(a float32, b float64) float64 { return float64(a) * b },
+		"mul64":     func(a float64, b float64) float64 { return a * b },
+		"isNil": func(v any) bool {
+			if v == nil {
+				return true
+			}
+			switch rv := reflect.ValueOf(v); rv.Kind() {
+			case reflect.Ptr, reflect.Interface:
+				return rv.IsNil()
+			}
+			return false
+		},
+		"deref": func(v any) any {
+			rv := reflect.ValueOf(v)
+			if rv.Kind() == reflect.Ptr && !rv.IsNil() {
+				return rv.Elem().Interface()
+			}
+			return v
+		},
+		"inputMethod": func(v int) string {
+			switch v {
+			case 0:
+				return "Keyboard"
+			case 1:
+				return "Gamepad"
+			case 2:
+				return "Wheel"
+			default:
+				return fmt.Sprintf("Unknown (%d)", v)
+			}
+		},
 	}
 
 	// Parse each page template separately so block definitions don't collide.
@@ -303,7 +335,8 @@ func (h *Handler) handleLap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"Lap": lap,
+		"Lap":        lap,
+		"HasCSPData": lap.ABSLevel != nil || lap.TCLevel != nil || lap.StabilityControl != nil || lap.AutoShifting != nil || lap.InputMethod != nil || lap.TyreCompound != nil,
 	}
 
 	h.render(w, "lap.html", data)

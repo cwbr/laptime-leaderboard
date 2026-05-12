@@ -42,6 +42,14 @@ type IngestLapRequest struct {
 	Grip        float32  `json:"grip,omitempty"`
 	SessionType string   `json:"session_type,omitempty"`
 
+	// CSP-only fields (nil for non-CSP clients)
+	ABSLevel         *int     `json:"abs_level"`
+	TCLevel          *int     `json:"tc_level"`
+	StabilityControl *float64 `json:"stability_control"`
+	AutoShifting     *bool    `json:"auto_shifting"`
+	InputMethod      *int     `json:"input_method"`
+	TyreCompound     *int     `json:"tyre_compound"`
+
 	// Extensible metadata (per-game extras)
 	Metadata map[string]any `json:"metadata,omitempty"`
 }

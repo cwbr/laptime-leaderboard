@@ -28,10 +28,12 @@ func (r *LapRepo) StoreLap(ctx context.Context, lap *domain.Lap) (int64, error) 
 	}
 
 	result, err := r.db.conn.ExecContext(ctx, `
-		INSERT INTO laps (server_id, player_id, track_id, car_id, lap_time_ms, sectors_json, cuts, valid, grip, session_type, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO laps (server_id, player_id, track_id, car_id, lap_time_ms, sectors_json, cuts, valid, grip, session_type, abs_level, tc_level, stability_control, auto_shifting, input_method, tyre_compound, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, lap.ServerID, lap.PlayerID, lap.TrackID, lap.CarID,
-		lap.LapTimeMs, sectorsJSON, lap.Cuts, lap.Valid, lap.Grip, lap.SessionType, lap.CreatedAt)
+		lap.LapTimeMs, sectorsJSON, lap.Cuts, lap.Valid, lap.Grip, lap.SessionType,
+		lap.ABSLevel, lap.TCLevel, lap.StabilityControl, lap.AutoShifting, lap.InputMethod, lap.TyreCompound,
+		lap.CreatedAt)
 	if err != nil {
 		return 0, err
 	}
@@ -157,6 +159,7 @@ func (r *LapRepo) GetLapDetail(ctx context.Context, lapID int64) (*domain.LapDet
 	err := r.db.conn.QueryRowContext(ctx, `
 		SELECT l.id, l.server_id, l.player_id, l.track_id, l.car_id,
 		       l.lap_time_ms, l.sectors_json, l.cuts, l.valid, l.grip, l.session_type, l.created_at,
+		       l.abs_level, l.tc_level, l.stability_control, l.auto_shifting, l.input_method, l.tyre_compound,
 		       p.name, p.country, t.name, t.config, c.name, c.class, s.name, g.name
 		FROM laps l
 		JOIN players p ON p.id = l.player_id
@@ -168,6 +171,7 @@ func (r *LapRepo) GetLapDetail(ctx context.Context, lapID int64) (*domain.LapDet
 	`, lapID).Scan(
 		&d.ID, &d.ServerID, &d.PlayerID, &d.TrackID, &d.CarID,
 		&d.LapTimeMs, &sectorsJSON, &d.Cuts, &d.Valid, &d.Grip, &d.SessionType, &d.CreatedAt,
+		&d.ABSLevel, &d.TCLevel, &d.StabilityControl, &d.AutoShifting, &d.InputMethod, &d.TyreCompound,
 		&d.PlayerName, &d.PlayerCountry, &d.TrackName, &d.TrackConfig, &d.CarName, &d.CarClass,
 		&d.ServerName, &d.GameName,
 	)

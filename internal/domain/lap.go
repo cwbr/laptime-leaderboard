@@ -19,6 +19,14 @@ type Lap struct {
 	Grip         float32   `json:"grip,omitempty"`
 	SessionType  string    `json:"session_type,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
+
+	// CSP-only fields (nil for non-CSP clients)
+	ABSLevel         *int     `json:"abs_level"`
+	TCLevel          *int     `json:"tc_level"`
+	StabilityControl *float64 `json:"stability_control"`
+	AutoShifting     *bool    `json:"auto_shifting"`
+	InputMethod      *int     `json:"input_method"`
+	TyreCompound     *int     `json:"tyre_compound"`
 }
 
 // LeaderboardEntry is a projected view: best lap per player/track/car.

@@ -76,17 +76,23 @@ func (s *Service) IngestLap(ctx context.Context, req IngestLapRequest) error {
 
 	// 4. Store the lap
 	lap := &Lap{
-		ServerID:    server.ID,
-		PlayerID:    player.ID,
-		TrackID:     track.ID,
-		CarID:       car.ID,
-		LapTimeMs:   req.LapTimeMs,
-		SectorsMs:   req.SectorsMs,
-		Cuts:        req.Cuts,
-		Valid:       req.Valid,
-		Grip:        req.Grip,
-		SessionType: req.SessionType,
-		CreatedAt:   time.Now().UTC(),
+		ServerID:         server.ID,
+		PlayerID:         player.ID,
+		TrackID:          track.ID,
+		CarID:            car.ID,
+		LapTimeMs:        req.LapTimeMs,
+		SectorsMs:        req.SectorsMs,
+		Cuts:             req.Cuts,
+		Valid:            req.Valid,
+		Grip:             req.Grip,
+		SessionType:      req.SessionType,
+		ABSLevel:         req.ABSLevel,
+		TCLevel:          req.TCLevel,
+		StabilityControl: req.StabilityControl,
+		AutoShifting:     req.AutoShifting,
+		InputMethod:      req.InputMethod,
+		TyreCompound:     req.TyreCompound,
+		CreatedAt:        time.Now().UTC(),
 	}
 
 	id, err := s.laps.StoreLap(ctx, lap)
